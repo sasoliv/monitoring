@@ -1,0 +1,63 @@
+version: "3.5"
+services:
+
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    ports:
+      - 10800:8000
+      - 10900:9000
+    restart: unless-stopped
+
+  prometheus:
+    image: prometheus-local
+    build:
+      context: ./prometheus
+    container_name: prometheus
+    volumes:
+      - prometheus-data:/prometheus    
+    restart: unless-stopped
+
+  grafana:
+    image: grafana-local
+    build:
+      context: ./grafana
+    container_name: grafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - 10300:3000
+    restart: unless-stopped
+
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node-exporter
+    command:
+      - '--path.rootfs=/host'
+    volumes:
+      - '/:/host:ro,rslave'
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    restart: unless-stopped
+
+volumes:
+  portainer_data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
